@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- The dependency declares minSdk33. V4GlassApi33 is entered only after the policy/SDK gate.
+         Keep this local as well as in the consuming app so library Robolectric manifest merging
+         is possible at minSdk26. This override is NOT runtime or driver verification. -->
+    <uses-sdk tools:overrideLibrary="top.yukonga.miuix.kmp.blur" />
+</manifest>
