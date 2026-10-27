@@ -2,6 +2,7 @@
 .gradle/
 /local.properties
 /signing.properties
+.mimosa/
 .idea/
 .DS_Store
 build/

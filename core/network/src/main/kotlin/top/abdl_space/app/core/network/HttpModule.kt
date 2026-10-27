@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit
 import top.abdl_space.app.core.network.api.AuthApi
 import top.abdl_space.app.core.network.api.MastodonApi
 import top.abdl_space.app.core.network.api.MessagesApi
+import top.abdl_space.app.core.network.api.NotificationApi
 import top.abdl_space.app.core.network.api.NbwApi
 import top.abdl_space.app.core.network.api.NbwInteractionsApi
 import javax.inject.Qualifier
@@ -58,6 +59,10 @@ object HttpModule {
 
     @Provides @Singleton
     fun mastodonApi(@WebRetrofit retrofit: Retrofit): MastodonApi = retrofit.create(MastodonApi::class.java)
+
+    @Provides @Singleton
+    fun notificationApi(@WebRetrofit retrofit: Retrofit): NotificationApi =
+        retrofit.create(NotificationApi::class.java)
 
     @Provides @Singleton
     fun messagesApi(@WebRetrofit retrofit: Retrofit): MessagesApi = retrofit.create(MessagesApi::class.java)

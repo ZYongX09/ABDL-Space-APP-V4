@@ -189,5 +189,5 @@ private fun V4ReadOnlyStatusCard(envelope: Status) {
 }
 
 /** Html.fromHtml without an ImageGetter performs no fetch. Strip image placeholders, keep text. */
-private fun htmlToPlainText(html: String): String = Html.fromHtml(html, Html.FROM_HTML_MODE_COMPACT)
+internal fun htmlToPlainText(html: String): String = Html.fromHtml(html, Html.FROM_HTML_MODE_COMPACT)
     .toString().replace("\uFFFC", "").trim()
