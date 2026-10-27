@@ -28,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -51,6 +52,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import top.abdl_space.app.V4ComposeUiState
 import top.abdl_space.app.core.designsystem.component.V4PillNavItem
 import top.abdl_space.app.core.designsystem.component.V4PillNavigationBar
 import top.abdl_space.app.core.designsystem.glass.V4GlassBackdropProvider
@@ -61,6 +63,7 @@ import top.abdl_space.app.core.designsystem.theme.V4Theme
 
 private const val EditorRoute = "local-editor"
 private const val SettingsRoute = "me/settings"
+private const val ConversationPattern = "messages/conversation/{userId}"
 private const val NavigationFadeMillis = 120
 
 /**
@@ -86,6 +89,16 @@ fun V4App(
     onTimelineSelected: (V4TimelineKind) -> Unit = {},
     onTimelineRefresh: (V4TimelineKind) -> Unit = {},
     onLoadMore: (V4TimelineKind) -> Unit = {},
+    compose: V4ComposeUiState = V4ComposeUiState(),
+    onComposePublish: (String) -> Unit = {},
+    onComposeFeedbackConsumed: () -> Unit = {},
+    onComposeEditorOpened: () -> Unit = {},
+    onPublishedPostConsumed: (String) -> Unit = {},
+    messagesState: V4MessagesUiState = V4MessagesUiState(),
+    onMessagesTabSelected: (V4MessageTab) -> Unit = {},
+    onMessagesRefresh: (V4MessageTab) -> Unit = {},
+    onNotificationsLoadMore: () -> Unit = {},
+    onOpenConversation: (String) -> Unit = {},
 ) {
     var localThemeName by rememberSaveable { mutableStateOf(V4ThemePreference.System.name) }
     var localReduceTransparency by rememberSaveable { mutableStateOf(true) }
@@ -116,6 +129,16 @@ fun V4App(
             onTimelineSelected = onTimelineSelected,
             onTimelineRefresh = onTimelineRefresh,
             onLoadMore = onLoadMore,
+            compose = compose,
+            onComposePublish = onComposePublish,
+            onComposeFeedbackConsumed = onComposeFeedbackConsumed,
+            onComposeEditorOpened = onComposeEditorOpened,
+            onPublishedPostConsumed = onPublishedPostConsumed,
+            messagesState = messagesState,
+            onMessagesTabSelected = onMessagesTabSelected,
+            onMessagesRefresh = onMessagesRefresh,
+            onNotificationsLoadMore = onNotificationsLoadMore,
+            onOpenConversation = onOpenConversation,
         )
     }
 }
@@ -138,6 +161,16 @@ private fun V4AppContent(
     onTimelineSelected: (V4TimelineKind) -> Unit,
     onTimelineRefresh: (V4TimelineKind) -> Unit,
     onLoadMore: (V4TimelineKind) -> Unit,
+    compose: V4ComposeUiState,
+    onComposePublish: (String) -> Unit,
+    onComposeFeedbackConsumed: () -> Unit,
+    onComposeEditorOpened: () -> Unit,
+    onPublishedPostConsumed: (String) -> Unit,
+    messagesState: V4MessagesUiState,
+    onMessagesTabSelected: (V4MessageTab) -> Unit,
+    onMessagesRefresh: (V4MessageTab) -> Unit,
+    onNotificationsLoadMore: () -> Unit,
+    onOpenConversation: (String) -> Unit,
 ) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -170,7 +203,24 @@ private fun V4AppContent(
         else navController.navigate(tab.accountRoute) { launchSingleTop = true }
     }
     fun openEditor() {
+        onComposeEditorOpened()
         navController.navigate(EditorRoute) { launchSingleTop = true }
+    }
+    // Closing the editor is an acknowledged event, independent of the dismissible Home notice.
+    LaunchedEffect(compose.publishedId) {
+        compose.publishedId?.let { id ->
+            draft = ""
+            if (navController.currentDestination?.route == EditorRoute) {
+                navController.popBackStack()
+                navController.selectTab(V4TopLevelDestination.Home)
+            }
+            onPublishedPostConsumed(id)
+        }
+    }
+    // The editor lives outside tab graphs; the host callback wins, the home account page is the fallback.
+    fun signInFromEditor() {
+        if (onSignInRequested != null) onSignInRequested()
+        else navController.navigate(V4TopLevelDestination.Home.accountRoute) { launchSingleTop = true }
     }
 
     V4GlassBackdropProvider(
@@ -197,6 +247,8 @@ private fun V4AppContent(
                                     onFeature = { openFeature(tab, it) }, onSignIn = { signIn(tab) },
                                     timelineState = timelineState, onTimelineSelected = onTimelineSelected,
                                     onTimelineRefresh = onTimelineRefresh, onLoadMore = onLoadMore,
+                                    publishFeedback = compose.feedback,
+                                    onPublishFeedbackDismiss = onComposeFeedbackConsumed,
                                 )
                                 V4TopLevelDestination.Discover -> V4DiscoverScreen(
                                     bottomPadding = bottomPadding,
@@ -204,7 +256,19 @@ private fun V4AppContent(
                                     onFeature = { openFeature(tab, it) },
                                 )
                                 V4TopLevelDestination.Messages -> V4MessagesScreen(
-                                    session = session, bottomPadding = bottomPadding, onSignIn = { signIn(tab) },
+                                    session = session, bottomPadding = bottomPadding,
+                                    messagesState = messagesState,
+                                    onTabSelected = onMessagesTabSelected,
+                                    onRefresh = onMessagesRefresh,
+                                    onLoadMoreNotifications = onNotificationsLoadMore,
+                                    onOpenConversation = { userId ->
+                                        onOpenConversation(userId)
+                                        // Opaque id, encoded for the route; the detail page stays read-only.
+                                        navController.navigate("messages/conversation/${android.net.Uri.encode(userId)}") {
+                                            launchSingleTop = true
+                                        }
+                                    },
+                                    onSignIn = { signIn(tab) },
                                 )
                                 V4TopLevelDestination.Me -> V4MeScreen(
                                     session = session, bottomPadding = bottomPadding, hasDraft = draft.isNotBlank(),
@@ -231,6 +295,14 @@ private fun V4AppContent(
                         composable(tab.accountRoute) {
                             V4AccountScreen(session, bottomPadding, onBack, onSignInRequested, onSignOutRequested)
                         }
+                        if (tab == V4TopLevelDestination.Messages) {
+                            composable(
+                                ConversationPattern,
+                                arguments = listOf(navArgument("userId") { type = NavType.StringType }),
+                            ) {
+                                V4ConversationDetailPlaceholder(bottomPadding, onBack)
+                            }
+                        }
                         if (tab == V4TopLevelDestination.Me) {
                             composable(SettingsRoute) {
                                 V4SettingsScreen(
@@ -247,7 +319,15 @@ private fun V4AppContent(
                     }
                 }
                 composable(EditorRoute) {
-                    V4EditorScreen(savedDraft = draft, onSaveDraft = { draft = it }, onExit = onBack)
+                    V4EditorScreen(
+                        savedDraft = draft,
+                        onSaveDraft = { draft = it },
+                        onExit = onBack,
+                        session = session,
+                        onSignIn = ::signInFromEditor,
+                        compose = compose,
+                        onPublish = onComposePublish,
+                    )
                 }
             }
         },
@@ -281,9 +361,9 @@ private fun V4AppContent(
         ModalBottomSheet(onDismissRequest = { showPublishActions = false }, containerColor = MaterialTheme.colorScheme.surface) {
             Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).navigationBarsPadding()) {
                 V4SectionTitle("创作与工具", Modifier.padding(V4Dimens.cardPadding))
-                Text("仅文字草稿可在本地编辑；其他入口仍在开发中。", style = V4Text.bodySecondary,
+                Text("文字发帖已接入（登录后可用）；媒体、投票等其他入口仍在开发中。", style = V4Text.bodySecondary,
                     modifier = Modifier.padding(horizontal = V4Dimens.cardPadding, vertical = V4Dimens.cardGap))
-                V4ActionRow("发帖", "打开本地文字草稿，不会联网发布", V4Glyph.Edit) {
+                V4ActionRow("发帖", "打开文字编辑器；登录后真实发布文字帖（公开可见范围）", V4Glyph.Edit) {
                     showPublishActions = false
                     openEditor()
                 }

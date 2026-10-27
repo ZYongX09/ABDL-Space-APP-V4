@@ -110,6 +110,11 @@ internal fun V4FeatureScreen(
     onBack: () -> Unit,
     onSignIn: () -> Unit,
 ) {
+    if (feature == V4Feature.Nbw) {
+        // The NBW entry reads the real capability snapshot instead of the static explanation shell.
+        V4NbwEntry(session = session, bottomPadding = bottomPadding, onBack = onBack, onSignIn = onSignIn)
+        return
+    }
     val title = feature?.title ?: "未找到入口"
     Column(Modifier.fillMaxSize().testTag(V4TestTags.Feature).semantics { paneTitle = title }) {
         V4PageTopBar(title, onBack)

@@ -62,7 +62,7 @@ class V4AppNavigationTest {
 
         selectTab("消息")
         compose.onNodeWithText("通知", substring = false).performClick()
-        compose.onNodeWithText("登录后查看通知").assertIsDisplayed()
+        compose.onNodeWithText("登录后查看消息").assertIsDisplayed()
         selectTab("发现")
         compose.onNodeWithTag(V4TestTags.Feature).assertIsDisplayed()
         compose.onNodeWithContentDescription("返回").performClick()
@@ -73,7 +73,7 @@ class V4AppNavigationTest {
 
         selectTab("消息")
         compose.onNodeWithText("通知", substring = false).assertIsSelected()
-        compose.onNodeWithText("登录后查看通知").assertIsDisplayed()
+        compose.onNodeWithText("登录后查看消息").assertIsDisplayed()
     }
 
     @Test
@@ -91,7 +91,7 @@ class V4AppNavigationTest {
     }
 
     @Test
-    fun publishingIsAnActionAndSavedDraftIsRestoredWithoutSuccessClaim() {
+    fun guestPublishHitsTheLoginGateAndSavedDraftIsRestoredWithoutSuccessClaim() {
         start()
         selectTab("发现")
         compose.onNodeWithContentDescription("发布", substring = false).performClick()
@@ -99,8 +99,9 @@ class V4AppNavigationTest {
         compose.onNodeWithText("保存本地草稿").performScrollTo().performClick()
         compose.onNodeWithText("请先输入非空白的正文。").performScrollTo().assertIsDisplayed()
         compose.onNodeWithTag(V4TestTags.EditorInput).performScrollTo().performTextInput("只在本地编辑的草稿")
-        compose.onNodeWithText("发布", substring = false).performClick()
-        compose.onNodeWithText("发布服务尚未接入").assertIsDisplayed()
+        // A guest's publish is gated to sign-in; nothing is sent and no success is claimed.
+        compose.onNodeWithTag(V4TestTags.EditorPublish).performClick()
+        compose.onNodeWithText("发布需要登录").assertIsDisplayed()
         compose.onNodeWithText("继续编辑", substring = false).performClick()
         compose.onNodeWithContentDescription("返回").performClick()
         compose.onNodeWithText("保存修改后再退出？").assertIsDisplayed()
@@ -108,7 +109,7 @@ class V4AppNavigationTest {
         compose.onNodeWithTag(V4TestTags.Discover).assertIsDisplayed()
         compose.onNodeWithContentDescription("发布", substring = false).performClick()
         assertInput(V4TestTags.EditorInput, "只在本地编辑的草稿")
-        compose.onAllNodesWithText("发布成功", substring = true).assertCountEquals(0)
+        compose.onAllNodesWithText("发帖成功", substring = true).assertCountEquals(0)
     }
 
     @Test

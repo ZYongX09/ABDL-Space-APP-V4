@@ -37,21 +37,29 @@ import top.abdl_space.app.ui.V4ThemePreference
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val viewModel: V4AppViewModel by viewModels()
+    private val composeViewModel: V4ComposeViewModel by viewModels()
+    private val messagesViewModel: V4MessagesViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent { V4Root(viewModel) }
+        setContent { V4Root(viewModel, composeViewModel, messagesViewModel) }
     }
 }
 
 @Composable
-private fun V4Root(viewModel: V4AppViewModel) {
+private fun V4Root(
+    viewModel: V4AppViewModel,
+    composeViewModel: V4ComposeViewModel,
+    messagesViewModel: V4MessagesViewModel,
+) {
     val appearance by viewModel.appearance.collectAsStateWithLifecycle()
     val session by viewModel.session.collectAsStateWithLifecycle()
     val login by viewModel.login.collectAsStateWithLifecycle()
     val notice by viewModel.notice.collectAsStateWithLifecycle()
     val timelines by viewModel.timelines.collectAsStateWithLifecycle()
+    val compose by composeViewModel.compose.collectAsStateWithLifecycle()
+    val messages by messagesViewModel.state.collectAsStateWithLifecycle()
     val theme = when (appearance.theme) {
         ThemePreference.SYSTEM -> V4ThemePreference.System
         ThemePreference.LIGHT -> V4ThemePreference.Light
@@ -67,28 +75,37 @@ private fun V4Root(viewModel: V4AppViewModel) {
     val activeLease = (session as? SessionState.Ready)?.lease
     androidx.compose.runtime.key(activeLease?.accountId, activeLease?.generation) {
         V4App(
-        themePreference = theme,
-        onThemePreferenceChange = {
-            viewModel.setTheme(
-                when (it) {
-                    V4ThemePreference.System -> ThemePreference.SYSTEM
-                    V4ThemePreference.Light -> ThemePreference.LIGHT
-                    V4ThemePreference.Dark -> ThemePreference.DARK
-                }
-            )
-        },
-        session = uiSession,
-        onSignInRequested = viewModel::openLogin,
-        onSignOutRequested = viewModel::signOut,
-        reduceTransparency = appearance.reduceTransparency,
-        onReduceTransparencyChange = viewModel::setReduceTransparency,
-        reduceMotion = appearance.reduceMotion,
-        onReduceMotionChange = viewModel::setReduceMotion,
-        timelineState = timelines,
-        onTimelineSelected = viewModel::selectTimeline,
-        onTimelineRefresh = viewModel::refreshTimeline,
-        onLoadMore = viewModel::loadMoreTimeline,
-    )
+            themePreference = theme,
+            onThemePreferenceChange = {
+                viewModel.setTheme(
+                    when (it) {
+                        V4ThemePreference.System -> ThemePreference.SYSTEM
+                        V4ThemePreference.Light -> ThemePreference.LIGHT
+                        V4ThemePreference.Dark -> ThemePreference.DARK
+                    }
+                )
+            },
+            session = uiSession,
+            onSignInRequested = viewModel::openLogin,
+            onSignOutRequested = viewModel::signOut,
+            reduceTransparency = appearance.reduceTransparency,
+            onReduceTransparencyChange = viewModel::setReduceTransparency,
+            reduceMotion = appearance.reduceMotion,
+            onReduceMotionChange = viewModel::setReduceMotion,
+            timelineState = timelines,
+            onTimelineSelected = viewModel::selectTimeline,
+            onTimelineRefresh = viewModel::refreshTimeline,
+            onLoadMore = viewModel::loadMoreTimeline,
+            compose = compose.takeIf { it.lease == activeLease } ?: V4ComposeUiState(),
+            onComposePublish = composeViewModel::publishPost,
+            onComposeFeedbackConsumed = composeViewModel::consumeComposeFeedback,
+            onComposeEditorOpened = composeViewModel::onComposeEditorOpened,
+            onPublishedPostConsumed = composeViewModel::consumePublishedPost,
+            messagesState = messages.takeIf { it.lease == activeLease } ?: top.abdl_space.app.ui.V4MessagesUiState(),
+            onMessagesTabSelected = messagesViewModel::tabSelected,
+            onMessagesRefresh = messagesViewModel::refresh,
+            onNotificationsLoadMore = messagesViewModel::loadMoreNotifications,
+        )
     }
     val darkTheme = when (appearance.theme) {
         ThemePreference.SYSTEM -> androidx.compose.foundation.isSystemInDarkTheme()

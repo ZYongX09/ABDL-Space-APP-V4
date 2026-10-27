@@ -39,6 +39,7 @@ class V4AppViewModel @Inject constructor(
     private val auth: AuthRepository,
     private val sessions: SessionRepository,
     private val timelineRepository: top.abdl_space.app.core.data.timeline.TimelineRepository,
+    private val nbwRepository: top.abdl_space.app.core.data.nbw.NbwRepository,
 ) : ViewModel() {
     val appearance = appearances.preferences.stateIn(
         viewModelScope,

@@ -6,10 +6,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -17,11 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ScrollableTabRow
@@ -42,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
@@ -65,6 +58,8 @@ internal fun V4HomeScreen(
     onTimelineSelected: (V4TimelineKind) -> Unit,
     onTimelineRefresh: (V4TimelineKind) -> Unit,
     onLoadMore: (V4TimelineKind) -> Unit,
+    publishFeedback: String? = null,
+    onPublishFeedbackDismiss: () -> Unit = {},
 ) {
     val pagerState = rememberPagerState { V4Feed.entries.size }
     val scope = rememberCoroutineScope()
@@ -88,6 +83,19 @@ internal fun V4HomeScreen(
         }
     }
     Column(Modifier.fillMaxSize().testTag(V4TestTags.Home).semantics { paneTitle = "首页" }) {
+        if (publishFeedback != null) {
+            // The only "posted" claim in the app: the server returned the created Status.
+            V4Card(Modifier.fillMaxWidth().padding(horizontal = V4Dimens.pagePaddingH).testTag(V4TestTags.PublishFeedback)) {
+                Column(Modifier.padding(V4Dimens.cardPadding), verticalArrangement = Arrangement.spacedBy(V4Dimens.cardGap)) {
+                    V4SectionTitle("发帖成功")
+                    Text(publishFeedback, style = V4Text.bodySecondary)
+                    TextButton(
+                        onClick = onPublishFeedbackDismiss,
+                        modifier = Modifier.heightIn(min = V4UiDimens.minTouchTarget),
+                    ) { Text("知道了", style = V4Text.bodySecondary) }
+                }
+            }
+        }
         Row(
             Modifier.fillMaxWidth().padding(horizontal = V4Dimens.pagePaddingH, vertical = V4Dimens.cardGap),
             verticalAlignment = Alignment.CenterVertically,
@@ -190,50 +198,10 @@ internal fun V4DiscoverScreen(bottomPadding: Dp, onSearch: () -> Unit, onFeature
             }
         }
         item("boundary") {
-            Text("开发中 · 宫格可打开功能说明，尚不能读取线上业务数据。", style = V4Text.bodySecondary, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("NBW 入口已读取真实能力状态；其余宫格仍是功能说明，尚不能读取线上业务数据。", style = V4Text.bodySecondary, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         item("recommendations") {
             V4StatusCard("推荐内容尚未接入", "没有可核实的推荐内容与热门话题。先了解功能入口，业务接入后才会呈现真实内容。", glyph = V4Glyph.Empty)
-        }
-    }
-}
-
-@Composable
-internal fun V4MessagesScreen(session: V4SessionUiState, bottomPadding: Dp, onSignIn: () -> Unit) {
-    var selected by rememberSaveable { mutableIntStateOf(0) }
-    // Keep both real scroll states in the destination, not a replacement fake conversation list.
-    val privateScroll = rememberScrollState()
-    val notificationScroll = rememberScrollState()
-    Column(Modifier.fillMaxSize().testTag(V4TestTags.Messages).semantics { paneTitle = "消息" }) {
-        V4PageTopBar("消息")
-        Row(Modifier.fillMaxWidth().selectableGroup()) {
-            V4MessageTab.entries.forEachIndexed { index, tab ->
-                Column(
-                    Modifier.weight(1f).selectable(selected = selected == index, role = Role.Tab, onClick = { selected = index })
-                        .heightIn(min = V4UiDimens.minTouchTarget).padding(V4Dimens.cardGap),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(tab.label, style = V4Text.body, color = if (selected == index) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(V4Dimens.cardGap / 2))
-                    Box(Modifier.fillMaxWidth().height(V4UiDimens.tabIndicatorHeight).background(if (selected == index) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.background))
-                }
-            }
-        }
-        val label = V4MessageTab.entries[selected].label
-        Column(
-            modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(if (selected == 0) privateScroll else notificationScroll)
-                .padding(start = V4Dimens.pagePaddingH, end = V4Dimens.pagePaddingH, top = V4Dimens.cardGap, bottom = bottomPadding),
-            verticalArrangement = Arrangement.spacedBy(V4Dimens.cardGap),
-        ) {
-            when (session) {
-                V4SessionUiState.Guest -> V4StatusCard(
-                    "登录后查看$label", "$label 属于你的私人内容。当前没有已登录账号，不会展示示例会话、虚构通知或未读角标。",
-                    glyph = V4Glyph.Shield, actionLabel = "登录或了解登录进度", onAction = onSignIn,
-                )
-                V4SessionUiState.Restoring -> V4StatusCard("正在确认登录状态", "确认完成后才能决定是否读取$label。当前没有加载任何私人内容。", glyph = V4Glyph.Shield)
-                is V4SessionUiState.SignedIn -> V4StatusCard("$label 服务尚未接入", "已收到应用提供的登录状态，但${if (selected == 0) "会话同步与发送" else "通知列表与推送"}仍在开发中。这里不代表你的线上$label 为空。", glyph = if (selected == 0) V4Glyph.Empty else V4Glyph.Bell)
-            }
-            Text("隐私优先 · 未接入不等于没有消息", style = V4Text.bodySecondary, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

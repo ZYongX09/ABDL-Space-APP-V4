@@ -2,7 +2,7 @@
 
 ABDL Space Android 客户端的独立重构项目，使用 Kotlin 与 Jetpack Compose。设计参考国内成熟社区应用的内容层级、卡片流与悬浮胶囊导航，保留 ABDL 婴儿蓝品牌和局部背景玻璃。V4 不是旧 Moshidon fork 上换皮，也不重建生产后端。
 
-> **开发中，不能替代正式版。** 当前处于基础建设与主壳阶段，不代表现有 App 全功能已迁移。`top.abdl_space.app` 与线上包名相同，正式签名测试包会覆盖旧版；不要把基础测试包装到日常使用设备上。
+> **开发中，不能替代正式版。** 已进入文字发布、通知/私信会话只读与 NBW 能力接入阶段，不代表现有 App 全功能已迁移。`top.abdl_space.app` 与线上包名相同，正式签名测试包会覆盖旧版；不要把开发测试包装到日常使用设备上。
 
 ## 范围
 
@@ -47,7 +47,10 @@ core/data              加密会话、账号代际隔离、外观偏好、认证
 - [全功能 UI 目标](docs/v4-ui-spec.md)（目标不是当前完成清单）
 - [参考应用初步分析](docs/v4-re-conclusions.md)
 - [APK 证据复核](docs/v4-apk-evidence-review.md)
-- [阶段边界与验收记录](docs/v4-foundation-delivery.md)
+- [基础阶段验收记录](docs/v4-foundation-delivery.md)
+- [文字发布、消息与 NBW 的交付边界](docs/v4-publishing-messages-nbw-delivery.md)
+
+GitHub Actions 对 `develop`/`main` 的推送和 PR 执行主机侧测试、开发 APK 与 instrumentation APK 构建；不包含正式签名密钥，也不把开发签名构建当作对外测试交付。工作流是否在 GitHub 上实际跑通，以对应 run 结果为准。
 
 玻璃仅在 API 33+、非低 RAM、硬件渲染且用户未要求减少透明效果时启用；否则完全不透明降级。本阶段是背景捕获与模糊，不宣称已经完成镜片折射效果或真实 GPU 验收。Robolectric 和 HTTP 契约测试也不能替代真实账号、设备、弱网、上传、推送与性能测试。
 

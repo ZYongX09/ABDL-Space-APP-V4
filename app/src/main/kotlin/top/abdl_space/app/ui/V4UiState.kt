@@ -68,7 +68,7 @@ internal enum class V4Feed(val label: String, val explanation: String) {
         }
 }
 
-internal enum class V4MessageTab(val label: String) {
+enum class V4MessageTab(val label: String) {
     Direct("私信"), Notifications("通知"),
 }
 
@@ -85,7 +85,7 @@ internal enum class V4Feature(
     FriendCard("friend-card", "扩列卡", "用扩列卡介绍自己，发现共同兴趣。", "广场、卡片详情与编辑服务尚未接入；没有虚构的成员卡片。", keywords = "扩列 交友 卡片"),
     Diaper("diaper", "纸尿裤", "浏览纸尿裤资料、评价与评分。", "商品资料、评价与榜单尚未接入；本页不提供未经核实的评分。", keywords = "纸尿裤 评价 评分"),
     Novel("novel", "小说", "社区书库、阅读与创作的入口。", "书库、阅读器与创作同步尚未接入；没有下载或展示任何作品。", keywords = "小说 阅读 书库 创作"),
-    Nbw("nbw", "NBW", "NBW 广场与内容分类的入口。", "分类、内容与 receipt 协议尚未接入；本页不会触发跨站发布。", keywords = "nbw 广场"),
+    Nbw("nbw", "NBW", "NBW 能力状态与板块目录的入口。", "入口已读取真实 NBW 能力与板块目录（登录后）；内容浏览、发帖与 receipt 协议尚未接入，不会触发跨站发布。", keywords = "nbw 广场"),
     Scan("scan", "扫一扫", "扫描社区二维码与登录码的入口。", "相机、扫码解析与登录确认尚未接入；不会申请相机权限或自动打开链接。", keywords = "扫一扫 扫码 二维码"),
     City("city", "同城", "按地区探索社区时间线。", "地区选择与省份时间线尚未接入；不会推断你的城市或读取位置。", keywords = "同城 省份 城市 地区"),
     Topics("topics", "话题", "探索社区话题与讨论。", "话题广场与详情尚未接入；没有虚构的热门话题、人数或帖子。", keywords = "话题 标签 讨论"),
@@ -99,7 +99,7 @@ internal enum class V4Feature(
     Privacy("privacy", "隐私与安全", "账户隐私与安全设置入口。", "线上隐私设置尚未接入。本轮只有主题、减弱动画与透明效果是可修改的本地偏好。", true),
     NotificationSettings("notification-settings", "通知设置", "管理社区通知偏好。", "推送注册与通知设置尚未接入；本轮不会向服务端注册设备。", true),
     Announcement("announcement", "社区公告", "查看正式社区公告。", "公告服务尚未接入；这里没有编造的公告或未读数量。"),
-    About("about", "关于 V4", "ABDL Space V4 · Compose 主壳开发中。", "当前可用的是导航、本地功能搜索、文字草稿，以及登录后由应用层提供的推荐 / 关注 / 热门只读时间线。密码登录、会话与偏好持久化由应用层接入；媒体浏览、互动、NBW 与 QQ / 邮箱登录界面仍未接入。"),
+    About("about", "关于 V4", "ABDL Space V4 · Compose 主壳开发中。", "当前可用的是导航、本地功能搜索、登录后的推荐 / 关注 / 热门只读时间线，以及登录后的真实文字发帖（公开可见范围）。密码登录、会话与偏好持久化由应用层接入；媒体发帖、互动、NBW 与 QQ / 邮箱登录界面仍未接入。"),
 }
 
 internal object V4FeatureCatalog {
@@ -145,6 +145,14 @@ internal object V4TestTags {
     const val Settings = "v4.settings"
     const val Editor = "v4.editor"
     const val EditorInput = "v4.editor.input"
+    const val EditorPublish = "v4.editor.publish"
+    const val EditorSending = "v4.editor.sending"
+    const val EditorError = "v4.editor.error"
+    const val EditorGateSignIn = "v4.editor.gate.sign-in"
     const val DraftFeedback = "v4.editor.feedback"
+    const val PublishFeedback = "v4.home.publish-feedback"
     const val BottomNavigation = "v4.bottom-navigation"
+    const val NbwStatus = "v4.nbw.status"
+    const val NbwCatalog = "v4.nbw.catalog"
+    const val NbwRefresh = "v4.nbw.refresh"
 }
